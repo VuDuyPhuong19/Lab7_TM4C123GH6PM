@@ -1,0 +1,467 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ; StringConversion.s
+    2 00000000         ; Student names: Vu Duy Phuong
+    3 00000000         ; Last modification date: change this to the last modifi
+                       cation date or look very silly
+    4 00000000         ; Runs on TM4C123
+    5 00000000         ; ECE319K lab 7 number to string conversions
+    6 00000000         ;
+    7 00000000         ; Used in ECE319K Labs 7,8,9,10. You write these two fun
+                       ctions
+    8 00000000         
+    9 00000000         
+   10 00000000                 EXPORT           Dec2String
+   11 00000000                 EXPORT           Fix2String
+   12 00000000                 AREA             |.text|, CODE, READONLY, ALIGN=
+2
+   13 00000000                 THUMB
+   14 00000000                 PRESERVE8
+   15 00000000         
+   16 00000000         
+   17 00000000         ;-----------------------Dec2String----------------------
+                       -
+   18 00000000         ; Convert a 32-bit number into unsigned decimal format
+   19 00000000         ; String the string into the empty array add null-termin
+                       ation
+   20 00000000         ; Input: R0 (call by value) 32-bit unsigned number
+   21 00000000         ;        R1 pointer to empty array
+   22 00000000         ; Output: none
+   23 00000000         ; Invariables: This function must not permanently modify
+                        registers R4 to R11
+   24 00000000 00000000 
+                       i       EQU              0
+   25 00000000 00000004 
+                       num     EQU              4
+   26 00000000 00000008 
+                       delta   EQU              8
+   27 00000000         Dec2String
+   28 00000000 E92D 43F0       PUSH{R4,R5,R6,R7,R8,R9,LR}
+   29 00000004 B082            SUB              SP,#8
+   30 00000006 F04F 0400       MOV              R4,#0
+   31 0000000A 9400            STR              R4,[SP,#i]  ; Initialize i on s
+                                                            tack
+   32 0000000C 4604            MOV              R4,R0
+   33 0000000E 2C00            CMP              R4,#0
+   34 00000010 D107            BNE              jump_1
+   35 00000012 9E00            LDR              R6,[SP,#i]
+   36 00000014 F04F 0730       MOV              R7,#0x30
+   37 00000018 518F            STR              R7,[R1,R6]
+   38 0000001A F106 0601       ADD              R6,#1
+   39 0000001E 9600            STR              R6,[SP,#i]
+   40 00000020 E034            B                jump_2
+   41 00000022         jump_1
+   42 00000022         loop_1                               ; count the number 
+                                                            of digits of R0
+   43 00000022 2C00            CMP              R4,#0x0
+   44 00000024 D008            BEQ              jump_3
+   45 00000026 F04F 050A       MOV              R5,#10
+   46 0000002A 9E00            LDR              R6,[SP,#i]
+   47 0000002C FBB4 F4F5       UDIV             R4,R4,R5
+   48 00000030 F106 0601       ADD              R6,#1
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   49 00000034 9600            STR              R6,[SP,#i]
+   50 00000036 E7F4            B                loop_1
+   51 00000038         jump_3
+   52 00000038 9D00            LDR              R5,[SP,#i]
+   53 0000003A F8DD 9000       LDR              R9,[SP,#i]
+   54 0000003E F1A5 0501       SUB              R5,#1
+   55 00000042 F04F 0601       MOV              R6,#1
+   56 00000046         power_of_10
+   57 00000046 2D00            CMP              R5,#0
+   58 00000048 D006            BEQ              jump_4
+   59 0000004A F04F 080A       MOV              R8,#10
+   60 0000004E FB06 F608       MUL              R6,R8
+   61 00000052 F1A5 0501       SUB              R5,#1
+   62 00000056 E7F6            B                power_of_10
+   63 00000058         jump_4
+   64 00000058 9500            STR              R5,[SP,#i]
+   65 0000005A 4604            MOV              R4,R0
+   66 0000005C         loop_2
+   67 0000005C 2E00            CMP              R6,#0
+   68 0000005E D015            BEQ              jump_5
+   69 00000060         
+   70 00000060 FBB4 F7F6       UDIV             R7,R4,R6    ; R6 is power of 10
+                                                            
+   71 00000064 FBB4 F5F6       UDIV             R5,R4,R6
+   72 00000068 FB06 F805       MUL              R8,R6,R5    ; R8=R6*R5
+   73 0000006C EBA4 0408       SUB              R4,R4,R8    ; R4=R4-R8
+   74 00000070         
+   75 00000070 9701            STR              R7,[SP,#num] ; Initialize num t
+                                                            o stack
+   76 00000072 9F01            LDR              R7,[SP,#num]
+   77 00000074 F107 0730       ADD              R7,#0x30
+   78 00000078         
+   79 00000078 F04F 050A       MOV              R5,#10
+   80 0000007C FBB6 F6F5       UDIV             R6,R6,R5
+   81 00000080         
+   82 00000080 9D00            LDR              R5,[SP,#i]
+   83 00000082 514F            STR              R7,[R1,R5]
+   84 00000084 F105 0501       ADD              R5,#1       ; i++
+   85 00000088 9500            STR              R5,[SP,#i]
+   86 0000008A E7E7            B                loop_2
+   87 0000008C         jump_5
+   88 0000008C         jump_2
+   89 0000008C 9C00            LDR              R4,[SP,#i]
+   90 0000008E F04F 0500       MOV              R5,#0x00
+   91 00000092 510D            STR              R5,[R1,R4]
+   92 00000094 B002            ADD              SP,#8
+   93 00000096 E8BD 43F0       POP{R4,R5,R6,R7,R8,R9,LR}
+   94 0000009A 4770            BX               LR
+   95 0000009C         ;* * * * * * * * End of Dec2String * * * * * * * *
+   96 0000009C         
+   97 0000009C         
+   98 0000009C         ; -----------------------Fix2String---------------------
+                       -
+   99 0000009C         ; Create characters for LCD display in fixed-point forma
+                       t
+  100 0000009C         ; unsigned decimal, resolution 0.001, range 0.000 to 9.9
+                       99
+  101 0000009C         ; Inputs:  R0 is an unsigned 32-bit number
+  102 0000009C         ;          R1 pointer to empty array
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+  103 0000009C         ; Outputs: none
+  104 0000009C         ; E.g., R0=0,    then create "0.000 "
+  105 0000009C         ;       R0=3,    then create "0.003 "
+  106 0000009C         ;       R0=89,   then create "0.089 "
+  107 0000009C         ;       R0=123,  then create "0.123 "
+  108 0000009C         ;       R0=9999, then create "9.999 "
+  109 0000009C         ;       R0>9999, then create "*.***"
+  110 0000009C         ; Invariables: This function must not permanently modify
+                        registers R4 to R11
+  111 0000009C         Fix2String
+  112 0000009C E92D 41F0       PUSH{R4,R5,R6,R7,R8,LR}
+  113 000000A0 B083            SUB              SP,#12
+  114 000000A2 F04F 0400       MOV              R4,#0
+  115 000000A6 9400            STR              R4,[SP,#i]
+  116 000000A8 F44F 747A       MOV              R4,#1000
+  117 000000AC 9402            STR              R4,[SP,#delta] ; Initialize del
+                                                            ta on stack
+  118 000000AE 4604            MOV              R4,R0
+  119 000000B0 F242 760F       MOV              R6,#9999
+  120 000000B4 42B4            CMP              R4,R6
+  121 000000B6 DD11            BLE              lessthan_or_equal
+  122 000000B8         ; > 9999 -> "*.***"
+  123 000000B8         greaterthan
+  124 000000B8 9C00            LDR              R4,[SP,#i]
+  125 000000BA 2C05            CMP              R4,#5
+  126 000000BC D030            BEQ              jump_7
+  127 000000BE 2C01            CMP              R4,#1
+  128 000000C0 D105            BNE              jump_6
+  129 000000C2 F04F 062E       MOV              R6,#0x2E    ; '.'
+  130 000000C6 510E            STR              R6,[R1,R4]
+  131 000000C8 F104 0401       ADD              R4,#1
+  132 000000CC 9400            STR              R4,[SP,#i]  ; i++
+  133 000000CE         jump_6
+  134 000000CE F04F 062A       MOV              R6,#0x2A    ; '*'
+  135 000000D2 510E            STR              R6,[R1,R4]
+  136 000000D4 F104 0401       ADD              R4,#1
+  137 000000D8 9400            STR              R4,[SP,#i]  ; i++
+  138 000000DA E7ED            B                greaterthan
+  139 000000DC         
+  140 000000DC         lessthan_or_equal
+  141 000000DC         loop_3
+  142 000000DC 9D02            LDR              R5,[SP,#delta]
+  143 000000DE 2D00            CMP              R5,#0
+  144 000000E0 D022            BEQ              jump_9      ; delta=0 -> jump_9
+                                                            
+  145 000000E2 FBB4 F6F5       UDIV             R6,R4,R5    ; R6=R4/R5
+  146 000000E6 9601            STR              R6,[SP,#num]
+  147 000000E8 9F00            LDR              R7,[SP,#i]
+  148 000000EA 2F01            CMP              R7,#1
+  149 000000EC D105            BNE              jump_8
+  150 000000EE F04F 062E       MOV              R6,#0x2E    ; '.'
+  151 000000F2 51CE            STR              R6,[R1,R7]
+  152 000000F4 F107 0701       ADD              R7,#1
+  153 000000F8 9700            STR              R7,[SP,#i]
+  154 000000FA         jump_8
+  155 000000FA 9E01            LDR              R6,[SP,#num]
+  156 000000FC F106 0630       ADD              R6,#0x30
+  157 00000100 51CE            STR              R6,[R1,R7]
+  158 00000102         
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  159 00000102 FBB4 F6F5       UDIV             R6,R4,R5
+  160 00000106 FB06 F805       MUL              R8,R6,R5
+  161 0000010A EBA4 0408       SUB              R4,R4,R8
+  162 0000010E         
+  163 0000010E F04F 080A       MOV              R8,#10
+  164 00000112 FBB5 F5F8       UDIV             R5,R5,R8
+  165 00000116 F107 0701       ADD              R7,#1
+  166 0000011A 9700            STR              R7,[SP,#i]  ; i++
+  167 0000011C 9502            STR              R5,[SP,#delta]
+  168 0000011E E7DD            B                loop_3
+  169 00000120         jump_7
+  170 00000120 F04F 0600       MOV              R6,#0x0
+  171 00000124 510E            STR              R6,[R1,R4]
+  172 00000126 E007            B                jump_10
+  173 00000128         jump_9
+  174 00000128 F04F 0620       MOV              R6,#32
+  175 0000012C 51CE            STR              R6,[R1,R7]
+  176 0000012E F107 0701       ADD              R7,R7,#1
+  177 00000132 F04F 0600       MOV              R6,#0x00
+  178 00000136 51CE            STR              R6,[R1,R7]
+  179 00000138         jump_10
+  180 00000138 B003            ADD              SP,#12
+  181 0000013A E8BD 41F0       POP{R4,R5,R6,R7,R8,LR}
+  182 0000013E         
+  183 0000013E 4770            BX               LR
+  184 00000140         
+  185 00000140         
+  186 00000140         
+  187 00000140         
+  188 00000140                 ALIGN                        ; make sure the end
+                                                             of this section is
+                                                             aligned
+  189 00000140                 END                          ; end of file
+Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4 --fpu=
+SoftVFP --depend=.\stringconversion.d -o.\stringconversion.o -I.\RTE\_Lab7 -I"C
+:\Users\Vu Duy Phuong\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Includ
+e" -I"C:\Users\Vu Duy Phuong\AppData\Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device
+\Include\TM4C123" --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" -
+-predefine="__UVISION_VERSION SETA 538" --predefine="_RTE_ SETA 1" --predefine=
+"TM4C123GH6PM SETA 1" --predefine="_RTE_ SETA 1" --list=.\stringconversion.lst 
+..\inc\StringConversion.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 12 in file ..\inc\StringConversion.s
+   Uses
+      None
+Comment: .text unused
+Dec2String 00000000
+
+Symbol: Dec2String
+   Definitions
+      At line 27 in file ..\inc\StringConversion.s
+   Uses
+      At line 10 in file ..\inc\StringConversion.s
+Comment: Dec2String used once
+Fix2String 0000009C
+
+Symbol: Fix2String
+   Definitions
+      At line 111 in file ..\inc\StringConversion.s
+   Uses
+      At line 11 in file ..\inc\StringConversion.s
+Comment: Fix2String used once
+greaterthan 000000B8
+
+Symbol: greaterthan
+   Definitions
+      At line 123 in file ..\inc\StringConversion.s
+   Uses
+      At line 138 in file ..\inc\StringConversion.s
+Comment: greaterthan used once
+jump_1 00000022
+
+Symbol: jump_1
+   Definitions
+      At line 41 in file ..\inc\StringConversion.s
+   Uses
+      At line 34 in file ..\inc\StringConversion.s
+Comment: jump_1 used once
+jump_10 00000138
+
+Symbol: jump_10
+   Definitions
+      At line 179 in file ..\inc\StringConversion.s
+   Uses
+      At line 172 in file ..\inc\StringConversion.s
+Comment: jump_10 used once
+jump_2 0000008C
+
+Symbol: jump_2
+   Definitions
+      At line 88 in file ..\inc\StringConversion.s
+   Uses
+      At line 40 in file ..\inc\StringConversion.s
+Comment: jump_2 used once
+jump_3 00000038
+
+Symbol: jump_3
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 51 in file ..\inc\StringConversion.s
+   Uses
+      At line 44 in file ..\inc\StringConversion.s
+Comment: jump_3 used once
+jump_4 00000058
+
+Symbol: jump_4
+   Definitions
+      At line 63 in file ..\inc\StringConversion.s
+   Uses
+      At line 58 in file ..\inc\StringConversion.s
+Comment: jump_4 used once
+jump_5 0000008C
+
+Symbol: jump_5
+   Definitions
+      At line 87 in file ..\inc\StringConversion.s
+   Uses
+      At line 68 in file ..\inc\StringConversion.s
+Comment: jump_5 used once
+jump_6 000000CE
+
+Symbol: jump_6
+   Definitions
+      At line 133 in file ..\inc\StringConversion.s
+   Uses
+      At line 128 in file ..\inc\StringConversion.s
+Comment: jump_6 used once
+jump_7 00000120
+
+Symbol: jump_7
+   Definitions
+      At line 169 in file ..\inc\StringConversion.s
+   Uses
+      At line 126 in file ..\inc\StringConversion.s
+Comment: jump_7 used once
+jump_8 000000FA
+
+Symbol: jump_8
+   Definitions
+      At line 154 in file ..\inc\StringConversion.s
+   Uses
+      At line 149 in file ..\inc\StringConversion.s
+Comment: jump_8 used once
+jump_9 00000128
+
+Symbol: jump_9
+   Definitions
+      At line 173 in file ..\inc\StringConversion.s
+   Uses
+      At line 144 in file ..\inc\StringConversion.s
+Comment: jump_9 used once
+lessthan_or_equal 000000DC
+
+Symbol: lessthan_or_equal
+   Definitions
+      At line 140 in file ..\inc\StringConversion.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 121 in file ..\inc\StringConversion.s
+Comment: lessthan_or_equal used once
+loop_1 00000022
+
+Symbol: loop_1
+   Definitions
+      At line 42 in file ..\inc\StringConversion.s
+   Uses
+      At line 50 in file ..\inc\StringConversion.s
+Comment: loop_1 used once
+loop_2 0000005C
+
+Symbol: loop_2
+   Definitions
+      At line 66 in file ..\inc\StringConversion.s
+   Uses
+      At line 86 in file ..\inc\StringConversion.s
+Comment: loop_2 used once
+loop_3 000000DC
+
+Symbol: loop_3
+   Definitions
+      At line 141 in file ..\inc\StringConversion.s
+   Uses
+      At line 168 in file ..\inc\StringConversion.s
+Comment: loop_3 used once
+power_of_10 00000046
+
+Symbol: power_of_10
+   Definitions
+      At line 56 in file ..\inc\StringConversion.s
+   Uses
+      At line 62 in file ..\inc\StringConversion.s
+Comment: power_of_10 used once
+19 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+delta 00000008
+
+Symbol: delta
+   Definitions
+      At line 26 in file ..\inc\StringConversion.s
+   Uses
+      At line 117 in file ..\inc\StringConversion.s
+      At line 142 in file ..\inc\StringConversion.s
+      At line 167 in file ..\inc\StringConversion.s
+
+i 00000000
+
+Symbol: i
+   Definitions
+      At line 24 in file ..\inc\StringConversion.s
+   Uses
+      At line 31 in file ..\inc\StringConversion.s
+      At line 35 in file ..\inc\StringConversion.s
+      At line 39 in file ..\inc\StringConversion.s
+      At line 46 in file ..\inc\StringConversion.s
+      At line 49 in file ..\inc\StringConversion.s
+      At line 52 in file ..\inc\StringConversion.s
+      At line 53 in file ..\inc\StringConversion.s
+      At line 64 in file ..\inc\StringConversion.s
+      At line 82 in file ..\inc\StringConversion.s
+      At line 85 in file ..\inc\StringConversion.s
+      At line 89 in file ..\inc\StringConversion.s
+      At line 115 in file ..\inc\StringConversion.s
+      At line 124 in file ..\inc\StringConversion.s
+      At line 132 in file ..\inc\StringConversion.s
+      At line 137 in file ..\inc\StringConversion.s
+      At line 147 in file ..\inc\StringConversion.s
+      At line 153 in file ..\inc\StringConversion.s
+      At line 166 in file ..\inc\StringConversion.s
+
+num 00000004
+
+Symbol: num
+   Definitions
+      At line 25 in file ..\inc\StringConversion.s
+   Uses
+      At line 75 in file ..\inc\StringConversion.s
+      At line 76 in file ..\inc\StringConversion.s
+      At line 146 in file ..\inc\StringConversion.s
+      At line 155 in file ..\inc\StringConversion.s
+
+3 symbols
+357 symbols in table
